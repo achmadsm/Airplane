@@ -9,11 +9,13 @@ class CustomTextFormField extends StatelessWidget {
     required this.hintText,
     required this.controller,
     this.obscureText = false,
+    this.type = TextInputType.text,
   });
 
   final String title;
   final String hintText;
   final TextEditingController controller;
+  final TextInputType type;
   final bool obscureText;
 
   @override
@@ -33,6 +35,7 @@ class CustomTextFormField extends StatelessWidget {
           TextFormField(
             obscureText: obscureText,
             controller: controller,
+            keyboardType: type,
             cursorColor: kBlackColor,
             decoration: InputDecoration(
               hintText: hintText,
