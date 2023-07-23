@@ -1,9 +1,9 @@
 import 'package:airplane/cubit/auth_cubit.dart';
+import 'package:airplane/cubit/transaction_cubit.dart';
 import 'package:airplane/models/transaction_model.dart';
 import 'package:airplane/shared/theme.dart';
-import 'package:airplane/ui/pages/success_checkout_page.dart';
-import 'package:airplane/ui/widgets/booking_details_item.dart';
 import 'package:airplane/ui/widgets/custom_button.dart';
+import 'package:airplane/ui/widgets/transaction_card.dart';
 import 'package:airplane/utils/currency_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,133 +60,7 @@ class CheckoutPage extends StatelessWidget {
     }
 
     Widget bookingDetails() {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 30,
-          horizontal: 20,
-        ),
-        margin: const EdgeInsets.only(top: 30),
-        decoration: BoxDecoration(
-          color: kWhiteColor,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // NOTE: DESTINATION TILE
-            Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: NetworkImage(
-                        transaction.destination.imageUrl,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        transaction.destination.name,
-                        style: blackTextStyle.copyWith(
-                          fontSize: 18,
-                          fontWeight: medium,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        transaction.destination.city,
-                        style: greyTextStyle.copyWith(
-                          fontWeight: light,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      margin: const EdgeInsets.only(right: 2),
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/icon_star.png'),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      transaction.destination.rating.toString(),
-                      style: blackTextStyle.copyWith(
-                        fontWeight: medium,
-                      ),
-                    )
-                  ],
-                ),
-              ],
-            ),
-
-            // NOTE: BOOKING DETAILS TEXT
-            Container(
-              margin: const EdgeInsets.only(top: 20),
-              child: Text(
-                'Booking Details',
-                style: blackTextStyle.copyWith(
-                  fontSize: 16,
-                  fontWeight: bold,
-                ),
-              ),
-            ),
-
-            // NOTE: BOOKING DETAILS ITEMs
-            BookingDetailsItem(
-              title: 'Traveler',
-              valueText: '${transaction.amountOfTraveler} person',
-              valueColor: kBlackColor,
-            ),
-            BookingDetailsItem(
-              title: 'Seat',
-              valueText: transaction.selectedSeats,
-              valueColor: kBlackColor,
-            ),
-            BookingDetailsItem(
-              title: 'Insurance',
-              valueText: transaction.insurance ? 'YES' : 'NO',
-              valueColor: transaction.insurance ? kGreenColor : kRedColor,
-            ),
-            BookingDetailsItem(
-              title: 'Refundable',
-              valueText: transaction.refundable ? 'YES' : 'No',
-              valueColor: transaction.refundable ? kGreenColor : kRedColor,
-            ),
-            BookingDetailsItem(
-              title: 'VAT',
-              valueText: '${(transaction.vat * 100).toStringAsFixed(0)}%',
-              valueColor: kBlackColor,
-            ),
-            BookingDetailsItem(
-              title: 'Price',
-              valueText: currencyFormat(transaction.price),
-              valueColor: kBlackColor,
-            ),
-            BookingDetailsItem(
-              title: 'Grand Total',
-              valueText: currencyFormat(transaction.grandTotal),
-              valueColor: kPrimaryColor,
-            )
-          ],
-        ),
-      );
+      return TransactionCard(transaction: transaction);
     }
 
     Widget paymentDetails() {
@@ -287,17 +161,38 @@ class CheckoutPage extends StatelessWidget {
     }
 
     Widget payNowButton() {
-      return Container(
-        margin: const EdgeInsets.only(top: 30),
-        child: CustomButton(
-          title: 'Pay Now',
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SuccessCheckoutPage(),
-            ),
-          ),
-        ),
+      return BlocConsumer<TransactionCubit, TransactionState>(
+        listener: (context, state) {
+          if (state is TransactionSuccess) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/success',
+              (route) => false,
+            );
+          } else if (state is TransactionFailed) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: kRedColor,
+                content: Text(state.error),
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is TransactionLoading) {
+            return Container(
+              margin: const EdgeInsets.only(top: 30),
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(),
+            );
+          }
+          return CustomButton(
+            title: 'Pay Now',
+            onPressed: () =>
+                context.read<TransactionCubit>().createTransaction(transaction),
+            margin: const EdgeInsets.only(top: 30),
+          );
+        },
       );
     }
 
