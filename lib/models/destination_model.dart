@@ -14,7 +14,7 @@ class DestinationModel extends Equatable {
     required this.city,
     required this.imageUrl,
     required this.rating,
-    required this.price,
+    this.price = 0,
   });
 
   factory DestinationModel.fromJson(String id, Map<String, dynamic> json) =>
