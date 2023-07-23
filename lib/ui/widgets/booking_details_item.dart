@@ -37,11 +37,15 @@ class BookingDetailsItem extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Text(
-            valueText,
-            style: blackTextStyle.copyWith(
-              fontWeight: bold,
-              color: valueColor,
+          Expanded(
+            child: Text(
+              valueText,
+              style: blackTextStyle.copyWith(
+                fontWeight: bold,
+                color: valueColor,
+              ),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.clip,
             ),
           ),
         ],

@@ -1,11 +1,17 @@
+import 'package:airplane/cubit/auth_cubit.dart';
+import 'package:airplane/models/transaction_model.dart';
 import 'package:airplane/shared/theme.dart';
 import 'package:airplane/ui/pages/success_checkout_page.dart';
 import 'package:airplane/ui/widgets/booking_details_item.dart';
 import 'package:airplane/ui/widgets/custom_button.dart';
+import 'package:airplane/utils/currency_format.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CheckoutPage extends StatelessWidget {
-  const CheckoutPage({super.key});
+  const CheckoutPage({super.key, required this.transaction});
+
+  final TransactionModel transaction;
 
   @override
   Widget build(BuildContext context) {
@@ -76,10 +82,10 @@ class CheckoutPage extends StatelessWidget {
                   margin: const EdgeInsets.only(right: 16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    image: const DecorationImage(
+                    image: DecorationImage(
                       fit: BoxFit.cover,
-                      image: AssetImage(
-                        'assets/image_destination1.png',
+                      image: NetworkImage(
+                        transaction.destination.imageUrl,
                       ),
                     ),
                   ),
@@ -89,7 +95,7 @@ class CheckoutPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Lake Ciliwung',
+                        transaction.destination.name,
                         style: blackTextStyle.copyWith(
                           fontSize: 18,
                           fontWeight: medium,
@@ -98,7 +104,7 @@ class CheckoutPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        'Tangerang',
+                        transaction.destination.city,
                         style: greyTextStyle.copyWith(
                           fontWeight: light,
                         ),
@@ -120,7 +126,7 @@ class CheckoutPage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '4.8',
+                      transaction.destination.rating.toString(),
                       style: blackTextStyle.copyWith(
                         fontWeight: medium,
                       ),
@@ -145,37 +151,37 @@ class CheckoutPage extends StatelessWidget {
             // NOTE: BOOKING DETAILS ITEMs
             BookingDetailsItem(
               title: 'Traveler',
-              valueText: '2 person',
+              valueText: '${transaction.amountOfTraveler} person',
               valueColor: kBlackColor,
             ),
             BookingDetailsItem(
               title: 'Seat',
-              valueText: 'A3, B3',
+              valueText: transaction.selectedSeats,
               valueColor: kBlackColor,
             ),
             BookingDetailsItem(
               title: 'Insurance',
-              valueText: 'YES',
-              valueColor: kGreenColor,
+              valueText: transaction.insurance ? 'YES' : 'NO',
+              valueColor: transaction.insurance ? kGreenColor : kRedColor,
             ),
             BookingDetailsItem(
               title: 'Refundable',
-              valueText: 'No',
-              valueColor: kRedColor,
+              valueText: transaction.refundable ? 'YES' : 'No',
+              valueColor: transaction.refundable ? kGreenColor : kRedColor,
             ),
             BookingDetailsItem(
               title: 'VAT',
-              valueText: '45%',
+              valueText: '${(transaction.vat * 100).toStringAsFixed(0)}%',
               valueColor: kBlackColor,
             ),
             BookingDetailsItem(
               title: 'Price',
-              valueText: 'IDR 8.500.690',
+              valueText: currencyFormat(transaction.price),
               valueColor: kBlackColor,
             ),
             BookingDetailsItem(
               title: 'Grand Total',
-              valueText: 'IDR 12.000.000',
+              valueText: currencyFormat(transaction.grandTotal),
               valueColor: kPrimaryColor,
             )
           ],
@@ -184,91 +190,99 @@ class CheckoutPage extends StatelessWidget {
     }
 
     Widget paymentDetails() {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 30,
-          horizontal: 20,
-        ),
-        margin: const EdgeInsets.only(top: 30),
-        decoration: BoxDecoration(
-          color: kWhiteColor,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Payment Details',
-              style: blackTextStyle.copyWith(
-                fontSize: 16,
-                fontWeight: bold,
+      return BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          if (state is AuthSuccess) {
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 30,
+                horizontal: 20,
               ),
-            ),
-            Container(
-              margin: const EdgeInsets.only(top: 16),
-              child: Row(
+              margin: const EdgeInsets.only(top: 30),
+              decoration: BoxDecoration(
+                color: kWhiteColor,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 100,
-                    height: 70,
-                    margin: const EdgeInsets.only(right: 16),
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/image_card.png'),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          margin: const EdgeInsets.only(right: 6),
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(
-                                'assets/icon_plane.png',
-                              ),
-                            ),
-                          ),
-                        ),
-                        Text(
-                          'Pay',
-                          style: whiteTextStyle.copyWith(
-                            fontSize: 16,
-                            fontWeight: medium,
-                          ),
-                        )
-                      ],
+                  Text(
+                    'Payment Details',
+                    style: blackTextStyle.copyWith(
+                      fontSize: 16,
+                      fontWeight: bold,
                     ),
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    child: Row(
                       children: [
-                        Text(
-                          'IDR 80.400.000',
-                          style: blackTextStyle.copyWith(
-                            fontSize: 18,
-                            fontWeight: regular,
+                        Container(
+                          width: 100,
+                          height: 70,
+                          margin: const EdgeInsets.only(right: 16),
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/image_card.png'),
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      'assets/icon_plane.png',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'Pay',
+                                style: whiteTextStyle.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: medium,
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Current Balance',
-                          style: greyTextStyle.copyWith(
-                            fontWeight: light,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                currencyFormat(state.user.balance),
+                                style: blackTextStyle.copyWith(
+                                  fontSize: 18,
+                                  fontWeight: regular,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Current Balance',
+                                style: greyTextStyle.copyWith(
+                                  fontWeight: light,
+                                ),
+                              )
+                            ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
+            );
+          } else {
+            return Container();
+          }
+        },
       );
     }
 

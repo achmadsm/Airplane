@@ -1,12 +1,14 @@
 import 'package:airplane/cubit/seat_cubit.dart';
 import 'package:airplane/models/destination_model.dart';
+import 'package:airplane/models/transaction_model.dart';
 import 'package:airplane/shared/theme.dart';
 import 'package:airplane/ui/pages/checkout_page.dart';
 import 'package:airplane/ui/widgets/custom_button.dart';
 import 'package:airplane/ui/widgets/seat_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+
+import '../../utils/currency_format.dart';
 
 class ChooseSeatPage extends StatelessWidget {
   const ChooseSeatPage({super.key, required this.destination});
@@ -254,11 +256,7 @@ class ChooseSeatPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        NumberFormat.currency(
-                          locale: 'id',
-                          symbol: 'IDR ',
-                          decimalDigits: 0,
-                        ).format(state.length * destination.price),
+                        currencyFormat(state.length * destination.price),
                         style: purpleTextStyle.copyWith(
                           fontSize: 16,
                           fontWeight: semiBold,
@@ -275,18 +273,34 @@ class ChooseSeatPage extends StatelessWidget {
     }
 
     Widget checkOutButton() {
-      return CustomButton(
-        title: 'Continue to Checkout',
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CheckoutPage(),
-          ),
-        ),
-        margin: const EdgeInsets.only(
-          top: 30,
-          bottom: 40,
-        ),
+      return BlocBuilder<SeatCubit, List<String>>(
+        builder: (context, state) {
+          int price = state.length * destination.price;
+          return CustomButton(
+            title: 'Continue to Checkout',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CheckoutPage(
+                  transaction: TransactionModel(
+                    destination: destination,
+                    amountOfTraveler: state.length,
+                    selectedSeats: state.join(', '),
+                    insurance: true,
+                    refundable: false,
+                    vat: 0.45,
+                    price: price,
+                    grandTotal: price + (price * 0.45).toInt(),
+                  ),
+                ),
+              ),
+            ),
+            margin: const EdgeInsets.only(
+              top: 30,
+              bottom: 40,
+            ),
+          );
+        },
       );
     }
 
